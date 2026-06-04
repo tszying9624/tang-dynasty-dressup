@@ -12,4 +12,199 @@
     #game { display: flex; width: 100%; height: 100%; }
     
     #character-area {
-        flex: 1;
+        flex: 1; position: relative; background: #f8f0e0; 
+        border-right: 3px solid #8b5a2b;
+        display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    #character { position: relative; width: 420px; height: 680px; }
+    .layer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        object-fit: contain; pointer-events: none; user-select: none;
+    }
+
+    #sidebar {
+        width: 360px; background: #5c3311; color: #f4e4c9; 
+        padding: 15px; overflow-y: auto;
+    }
+    .category h3 {
+        background: #8b5a2b; padding: 10px; margin: 0 0 12px 0; 
+        border-radius: 6px; text-align: center;
+    }
+    .items {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .item {
+        width: 100px; height: 100px; background: #fff; border: 2px solid #d4a373;
+        border-radius: 10px; overflow: hidden; cursor: grab; 
+        transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .item:hover { transform: scale(1.15); border-color: #ffd700; }
+    .item img { width: 100%; height: 100%; object-fit: contain; }
+
+    #modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.75); z-index: 1000; 
+        align-items: center; justify-content: center;
+    }
+    #modal-content {
+        background: #f8f0e0; color: #5c3311; padding: 25px; border-radius: 12px;
+        max-width: 460px; border: 5px solid #8b5a2b;
+    }
+    .close { float: right; font-size: 32px; cursor: pointer; color: #b22222; }
+
+    button {
+        margin-top: 12px; padding: 14px; background: #d4a373; color: #5c3311;
+        border: none; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%;
+    }
+    button:hover { background: #ffd700; }
+</style>
+</head>
+<body>
+
+<div id="game">
+    <div id="character-area" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <div id="character">
+            <img id="base" class="layer" src="https://i.ibb.co.com/5Y0zq3K/tang-base-body.png">
+            <img id="hair" class="layer" src="">
+            <img id="top" class="layer" src="">
+            <img id="skirt" class="layer" src="">
+            <img id="shawl" class="layer" src="">
+            <img id="accessory" class="layer" src="">
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <h2 style="text-align:center; margin:10px 0 20px;">霓裳唐韻<br>盛唐換裝遊戲</h2>
+        
+        <div class="category"><h3>髮型</h3><div class="items" id="hair-items"></div></div>
+        <div class="category"><h3>上衣</h3><div class="items" id="top-items"></div></div>
+        <div class="category"><h3>裙子</h3><div class="items" id="skirt-items"></div></div>
+        <div class="category"><h3>披帛</h3><div class="items" id="shawl-items"></div></div>
+        <div class="category"><h3>飾品</h3><div class="items" id="accessory-items"></div></div>
+
+        <button onclick="randomOutfit()">🎲 隨機盛唐搭配</button>
+        <button onclick="resetOutfit()">🔄 全部重置</button>
+        <button onclick="exportTip()">📸 截圖 + AI 照片融合</button>
+    </div>
+</div>
+
+<!-- 歷史知識彈窗 -->
+<div id="modal">
+    <div id="modal-content">
+        <span class="close" onclick="closeModal()">×</span>
+        <h3 id="modal-title"></h3>
+        <p id="modal-text"></p>
+    </div>
+</div>
+
+<script>
+// ====================== 素材與歷史知識 ======================
+const assets = {
+    hair: [
+        {name:"驚鵠髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair1.png", info:"唐代流行的高聳髮髻，象徵青春活力，常見於初唐至盛唐貴族女子。"},
+        {name:"墮馬髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair2.png", info:"慵懶優雅的側垂髮髻，盛唐復興，體現自然之美。"},
+        {name:"雙丫髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair3.png", info:"少女常用髮型，活潑可愛，也被稱為「丫髻」。"},
+        {name:"高髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair4.png", info:"武則天時期極為流行的高髻，展現雍容華貴氣質。"}
+    ],
+    top: [
+        {name:"窄袖襦", url:"https://i.ibb.co.com/5Y0zq3K/tang-top1.png", info:"窄袖短襦，便於活動，反映唐代女性參與騎射等活動的開放風氣。"},
+        {name:"寬袖衫", url:"https://i.ibb.co.com/5Y0zq3K/tang-top2.png", info:"寬大飄逸的衫，搭配披帛，是盛唐最經典的優雅穿搭。"},
+        {name:"對襟褙子", url:"https://i.ibb.co.com/5Y0zq3K/tang-top3.png", info:"中晚唐流行的對襟上衣，胡風與漢風融合的代表。"}
+    ],
+    skirt: [
+        {name:"石榴裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt1.png", info:"以石榴紅染製的裙子，最受楊貴妃喜愛，象徵熱烈與富貴。"},
+        {name:"間色裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt2.png", info:"多種顏色相間的裙子，展現唐代高超的染織技術。"},
+        {name:"百褶裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt3.png", info:"細密褶皺的長裙，行走時優美飄逸，是唐代女性最愛的裙型。"}
+    ],
+    shawl: [
+        {name:"紅色披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl1.png", info:"唐代女性標誌性配飾，常見於詩詞「披帛」，增添飄逸感。"},
+        {name:"綠色披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl2.png", info:"綠色代表青春與自然，常與石榴裙搭配。"},
+        {name:"淡粉披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl3.png", info:"柔美淡雅的顏色，適合文雅氣質的女子。"}
+    ],
+    accessory: [
+        {name:"花鈿", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc1.png", info:"唐代女子額頭上的裝飾，是盛唐最具代表性的妝容元素。"},
+        {name:"步搖", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc2.png", info:"戴在頭上的金玉首飾，行走時搖曳生姿，故名「步搖」。"},
+        {name:"耳璫", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc3.png", info:"唐代流行的大耳環，體現胡漢文化交流。"}
+    ]
+};
+
+// ====================== 渲染物品 ======================
+function renderItems() {
+    function createItem(category, item) {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.draggable = true;
+        div.dataset.category = category;
+        div.innerHTML = `<img src="${item.url}" title="${item.name}">`;
+        
+        div.onclick = () => showModal(item.name, item.info);
+        
+        div.ondragstart = (e) => {
+            e.dataTransfer.setData("category", category);
+            e.dataTransfer.setData("url", item.url);
+        };
+        
+        document.getElementById(category + '-items').appendChild(div);
+    }
+
+    assets.hair.forEach(item => createItem('hair', item));
+    assets.top.forEach(item => createItem('top', item));
+    assets.skirt.forEach(item => createItem('skirt', item));
+    assets.shawl.forEach(item => createItem('shawl', item));
+    assets.accessory.forEach(item => createItem('accessory', item));
+}
+
+// ====================== 拖拽功能 ======================
+function allowDrop(ev) { ev.preventDefault(); }
+function drop(ev) {
+    ev.preventDefault();
+    const category = ev.dataTransfer.getData("category");
+    const url = ev.dataTransfer.getData("url");
+    if (category && url) {
+        document.getElementById(category).src = url;
+    }
+}
+
+// ====================== 彈窗功能 ======================
+function showModal(title, text) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-text').innerHTML = text;
+    document.getElementById('modal').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+// ====================== 其他功能 ======================
+function randomOutfit() {
+    document.getElementById('hair').src = assets.hair[Math.floor(Math.random()*assets.hair.length)].url;
+    document.getElementById('top').src = assets.top[Math.floor(Math.random()*assets.top.length)].url;
+    document.getElementById('skirt').src = assets.skirt[Math.floor(Math.random()*assets.skirt.length)].url;
+    document.getElementById('shawl').src = assets.shawl[Math.floor(Math.random()*assets.shawl.length)].url;
+    document.getElementById('accessory').src = assets.accessory[Math.floor(Math.random()*assets.accessory.length)].url;
+}
+
+function resetOutfit() {
+    ['hair','top','skirt','shawl','accessory'].forEach(id => {
+        document.getElementById(id).src = '';
+    });
+}
+
+function exportTip() {
+    alert("🎉 造型完成！\n\n1. 使用截圖工具截取左側角色區\n2. 前往 Pincel.ai 或 Looksy AI 上傳你的照片 + 截圖，即可生成「唐朝的我」！");
+}
+
+// ====================== 初始化 ======================
+window.onload = () => {
+    renderItems();
+    setTimeout(() => {
+        document.getElementById('hair').src = assets.hair[0].url;
+        document.getElementById('top').src = assets.top[1].url;
+        document.getElementById('skirt').src = assets.skirt[0].url;
+        document.getElementById('shawl').src = assets.shawl[0].url;
+        document.getElementById('accessory').src = assets.accessory[0].url;
+    }, 300);
+};
+</script>
+</body>
+</html>
