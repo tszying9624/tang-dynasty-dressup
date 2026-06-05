@@ -19,92 +19,41 @@
         display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
     
+    /* 💡 舞台畫布：鎖定 420 x 680 比例 */
     #character { 
         position: relative; 
         width: 420px; 
         height: 680px; 
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         border-radius: 8px;
+        overflow: hidden;
     }
     
-    /* 💡 基礎圖層設定 */
+    /* 💡 頂級重疊設定：因為是在相同 420x680 畫布下切圖，我們讓圖層完全滿版、不使用 object-fit 壓縮，即可完美還原 Canva 上的精準位置 */
     .layer {
         position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%;
         pointer-events: none; 
         user-select: none;
     }
 
-    /* 💡 模特兒底圖：鎖定滿版 */
-    #base {
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        object-fit: contain;
-        z-index: 1;
+    /* 💡 確保沒有載入圖片時，絕對不顯示難看的破圖符號與黑框 */
+    .layer:not([src]), .layer[src=""] {
+        opacity: 0 !important;
+        display: none !important;
     }
 
-    /* 💡 【關鍵修正】為不同部位量身打造尺寸、位置與自動去白底 */
-    
-    /* 1. 髮型圖層：縮小並推到模特兒頭部位置 */
-    #hair {
-        top: 25px;            /* 往下推到頭部的位置，您可以自由微調這個數字 */
-        left: 50%;
-        transform: translateX(-50%); /* 水平居中 */
-        width: 180px;         /* 縮小寬度，讓它符合人頭比例 */
-        height: 180px;
-        object-fit: contain;
-        z-index: 5;
-        mix-blend-mode: multiply; /* 🔥 核心高科技：自動過濾掉圖片的純白背景！ */
-    }
+    #base { z-index: 1; }      /* 模特兒底圖 */
+    #hair { z-index: 5; }      /* 回鶻髻 */
+    #top { z-index: 3; }       /* 上衣 */
+    #skirt { z-index: 2; }     /* 裙子 */
+    #shawl { z-index: 4; }     /* 披帛 */
+    #accessory { z-index: 6; } /* 飾品 */
 
-    /* 2. 上衣圖層 */
-    #top {
-        top: 150px;           /* 移到肩膀與軀幹位置 */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 260px;         /* 調整合適寬度 */
-        height: 220px;
-        object-fit: contain;
-        z-index: 3;
-        mix-blend-mode: multiply; 
-    }
-
-    /* 3. 裙子圖層 */
-    #skirt {
-        top: 300px;           /* 移到下半身位置 */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 300px;
-        height: 350px;
-        object-fit: contain;
-        z-index: 2;          /* 裙子在衣服下面 */
-        mix-blend-mode: multiply;
-    }
-
-    /* 4. 披帛圖層（飄帶） */
-    #shawl {
-        top: 120px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 380px;         /* 披帛通常較寬 */
-        height: 400px;
-        object-fit: contain;
-        z-index: 4;          /* 飄帶披在衣服外面 */
-        mix-blend-mode: multiply;
-    }
-
-    /* 5. 飾品圖層（花鈿、步搖） */
-    #accessory {
-        top: 50px;            /* 額頭或耳朵位置 */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 120px;
-        height: 120px;
-        object-fit: contain;
-        z-index: 6;          /* 飾品戴在最外層 */
-        mix-blend-mode: multiply;
-    }
-
-    /* 側邊欄樣式保持不變 */
+    /* 側邊欄與按鈕樣式 */
     #sidebar {
         width: 360px; background: #5c3311; color: #f4e4c9; 
         padding: 15px; overflow-y: auto;
@@ -180,36 +129,38 @@
 </div>
 
 <script>
-// 素材陣列保持不變
+// ====================== 素材與歷史知識 ======================
 const assets = {
     hair: [
-        {name:"回紇髻", url:"https://i.ibb.co/m7FGqkj/Happy-Mother-s-Day.png", info:"唐代中晚期盛極一時的西域少數民族髮式，由回紇傳入中原。"},
+        /* 💡 成功更換老師提供的「回鶻髻」透明新連結與專業中史解說 */
+        {name:"回鶻髻", url:"https://i.ibb.co/FLzH2Rt7/image.png", info:"唐代中晚期盛極一時的西域少數民族髮式，由回紇傳入中原。"},
         {name:"墮馬髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair2.png", info:"慵懶優雅的側垂髮髻，盛唐復興，體現自然之美。"},
         {name:"雙丫髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair3.png", info:"少女常用髮型，活潑可愛，也被稱為「丫髻」。"},
         {name:"高髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair4.png", info:"武則天時期極為流行的高髻，展現雍容華貴氣質。"}
     ],
     top: [
-        {name:"窄袖襦", url:"https://i.ibb.co.com/5Y0zq3K/tang-top1.png", info:"窄袖短襦，便於活動，反映唐代女性參與騎射等活動的開放風氣。"},
-        {name:"寬袖衫", url:"https://i.ibb.co.com/5Y0zq3K/tang-top2.png", info:"寬大飄逸的衫，搭配披帛，是盛唐最經典的優雅穿搭。"},
-        {name:"對襟褙子", url:"https://i.ibb.co.com/5Y0zq3K/tang-top3.png", info:"中晚唐流行的對襟上衣，胡風與漢風融合的代表。"}
+        {name:"窄袖襦", url:"https://i.ibb.co/5Y0zq3K/tang-top1.png", info:"窄袖短襦，便於活動，反映唐代女性參與騎射等活動的開放風氣。"},
+        {name:"寬袖衫", url:"https://i.ibb.co/5Y0zq3K/tang-top2.png", info:"寬大飄逸的衫，搭配披帛，是盛唐最經典的優雅穿搭。"},
+        {name:"對襟褙子", url:"https://i.ibb.co/5Y0zq3K/tang-top3.png", info:"中晚唐流行的對襟上衣，胡風與漢風融合的代表。"}
     ],
     skirt: [
-        {name:"石榴裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt1.png", info:"以石榴紅染製的裙子，最受楊貴妃喜愛，象徵熱烈與富貴。"},
-        {name:"間色裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt2.png", info:"多種顏色相間的裙子，展現唐代高超的染織技術。"},
-        {name:"百褶裙", url:"https://i.ibb.co.com/5Y0zq3K/tang-skirt3.png", info:"細密褶皺的長裙，行走時優美飄逸，是唐代女性最愛的裙型。"}
+        {name:"石榴裙", url:"https://i.ibb.co/5Y0zq3K/tang-skirt1.png", info:"以石榴紅染製的裙子，最受楊貴妃喜愛，象徵熱烈與富貴。"},
+        {name:"間色裙", url:"https://i.ibb.co/5Y0zq3K/tang-skirt2.png", info:"多種顏色相間的裙子，展現唐代高超的染織技術。"},
+        {name:"百褶裙", url:"https://i.ibb.co/5Y0zq3K/tang-skirt3.png", info:"細密褶皺的長裙，行走時優美飄逸，是唐代女性最愛的裙型。"}
     ],
     shawl: [
-        {name:"紅色披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl1.png", info:"唐代女性標誌性配飾，常見於詩詞「披帛」，增添飄逸感。"},
-        {name:"綠色披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl2.png", info:"綠色代表青春與自然，常與石榴裙搭配。"},
-        {name:"淡粉披帛", url:"https://i.ibb.co.com/5Y0zq3K/tang-shawl3.png", info:"柔美淡雅的顏色，適合文雅氣質的女子。"}
+        {name:"紅色披帛", url:"https://i.ibb.co/5Y0zq3K/tang-shawl1.png", info:"唐代女性標誌性配飾，常見於詩詞「披帛」，增添飄逸感。"},
+        {name:"綠色披帛", url:"https://i.ibb.co/5Y0zq3K/tang-shawl2.png", info:"綠色代表青春與自然，常與石榴裙搭配。"},
+        {name:"淡粉披帛", url:"https://i.ibb.co/5Y0zq3K/tang-shawl3.png", info:"柔美淡雅的顏色，適合文雅氣質的女子。"}
     ],
     accessory: [
-        {name:"花鈿", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc1.png", info:"唐代女子額頭上的裝飾，是盛唐最具代表性的妝容元素。"},
-        {name:"步搖", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc2.png", info:"戴在頭上的金玉首飾，行走時搖曳生姿，故名「步搖」。"},
-        {name:"耳璫", url:"https://i.ibb.co.com/5Y0zq3K/tang-acc3.png", info:"唐代流行的大耳環，體現胡漢文化交流。"}
+        {name:"花鈿", url:"https://i.ibb.co/5Y0zq3K/tang-acc1.png", info:"唐代女子額頭上的裝飾，是盛唐最具代表性的妝容元素。"},
+        {name:"步搖", url:"https://i.ibb.co/5Y0zq3K/tang-acc2.png", info:"戴在頭上的金玉首飾，行走時搖曳生姿，故名「步搖」。"},
+        {name:"耳璫", url:"https://i.ibb.co/5Y0zq3K/tang-acc3.png", info:"唐代流行的大耳環，體現胡漢文化交流。"}
     ]
 };
 
+// ====================== 渲染與核心功能 ======================
 function renderItems() {
     function createItem(category, item) {
         const div = document.createElement('div');
@@ -224,11 +175,7 @@ function renderItems() {
         };
         document.getElementById(category + '-items').appendChild(div);
     }
-    assets.hair.forEach(item => createItem('hair', item));
-    assets.top.forEach(item => createItem('top', item));
-    assets.skirt.forEach(item => createItem('skirt', item));
-    assets.shawl.forEach(item => createItem('shawl', item));
-    assets.accessory.forEach(item => createItem('accessory', item));
+    Object.keys(assets).forEach(cat => assets[cat].forEach(item => createItem(cat, item)));
 }
 
 function allowDrop(ev) { ev.preventDefault(); }
@@ -246,16 +193,12 @@ function showModal(title, text) {
     document.getElementById('modal-text').innerHTML = text;
     document.getElementById('modal').style.display = 'flex';
 }
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
 function randomOutfit() {
-    document.getElementById('hair').src = assets.hair[Math.floor(Math.random()*assets.hair.length)].url;
-    document.getElementById('top').src = assets.top[Math.floor(Math.random()*assets.top.length)].url;
-    document.getElementById('skirt').src = assets.skirt[Math.floor(Math.random()*assets.skirt.length)].url;
-    document.getElementById('shawl').src = assets.shawl[Math.floor(Math.random()*assets.shawl.length)].url;
-    document.getElementById('accessory').src = assets.accessory[Math.floor(Math.random()*assets.accessory.length)].url;
+    Object.keys(assets).forEach(cat => {
+        document.getElementById(cat).src = assets[cat][Math.floor(Math.random()*assets[cat].length)].url;
+    });
 }
 
 function resetOutfit() {
@@ -265,12 +208,16 @@ function resetOutfit() {
 }
 
 function exportTip() {
-    alert("🎉 造型完成！\n\n1. 使用截圖工具截取左側角色區\n2. 前往 Pincel.ai 或 Looksy AI 上傳你的照片 + 截圖，即可生成「唐朝的我」！");
+    alert("📸 中史AI實驗室提示：\n\n1. 造型完成後，請將畫面截圖保存。\n2. 上傳截圖至 Gemini / Grok 並輸入：『請將這張換裝截圖與我的真人照片融合，生成寫實的唐代仕女圖，並以中史課堂學到的角度評述這套服飾的歷史背景。』");
 }
 
 window.onload = () => {
     renderItems();
     resetOutfit(); 
+    // 💡 預設自動加載第一個「回鶻髻」測試位置是否完美
+    setTimeout(() => {
+        document.getElementById('hair').src = assets.hair[0].url;
+    }, 200);
 };
 </script>
 </body>
