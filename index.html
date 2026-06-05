@@ -13,24 +13,22 @@
     
     #character-area {
         flex: 1; position: relative; 
-        /* 💡 這裡成功加入了老師提供的盛唐背景底圖 */
-        background: url('https://i.ibb.co/r2np4K0c/BG.jpg') no-repeat center center; 
-        background-size: cover; 
+        /* 💡 成功更換為老師指定的新背景底圖，並調整為完美適應的大小 */
+        background: url('https://i.ibb.co/DHqG3VVD/image.jpg') no-repeat center center; 
+        background-size: 100% 100%; 
         border-right: 3px solid #8b5a2b;
         display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
     
-    /* 💡 統一將畫布外框鎖定為老師要求的 420px x 680px */
     #character { 
         position: relative; 
         width: 420px; 
         height: 680px; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3); /* 幫舞台加個精緻陰影 */
-        background: rgba(255, 255, 255, 0.15); /* 微透明底色 */
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         border-radius: 8px;
+        overflow: hidden;
     }
     
-    /* 💡 修正遮擋關鍵：讓所有圖層（底圖、衣服、髮型）完美重疊且大小一致 */
     .layer {
         position: absolute; 
         top: 0; 
@@ -118,9 +116,11 @@
 
 <script>
 // ====================== 素材與歷史知識 ======================
+// 💡 提示：右側邊欄如果也出現 image not found，是因為下面這些 url 已經失效。
+// 老師之後只要把新上傳的配件「直連網址」替換掉下面的 url 網址即可！
 const assets = {
     hair: [
-        {name:"驚鵠髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair1.png", info:"唐代流行的高聳髮髻，象徵青春活力，常見於初唐至盛唐貴族女子。"},
+        {name:"回紇髻", url:"https://ibb.co/whP1VLTG"><img src="https://i.ibb.co/gZfCN7Gq/2026-06-05-9-30-22-1.png", info:"唐代流行的高聳髮髻，象徵青春活力，常見於初唐至盛唐貴族女子。"},
         {name:"墮馬髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair2.png", info:"慵懶優雅的側垂髮髻，盛唐復興，體現自然之美。"},
         {name:"雙丫髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair3.png", info:"少女常用髮型，活潑可愛，也被稱為「丫髻」。"},
         {name:"高髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair4.png", info:"武則天時期極為流行的高髻，展現雍容華貴氣質。"}
@@ -216,13 +216,8 @@ function exportTip() {
 // ====================== 初始化 ======================
 window.onload = () => {
     renderItems();
-    setTimeout(() => {
-        document.getElementById('hair').src = assets.hair[0].url;
-        document.getElementById('top').src = assets.top[1].url;
-        document.getElementById('skirt').src = assets.skirt[0].url;
-        document.getElementById('shawl').src = assets.shawl[0].url;
-        document.getElementById('accessory').src = assets.accessory[0].url;
-    }, 300);
+    /* 💡 徹底解決遮擋關鍵：移除原本自動載入失效衣服網址的設定，預設只乾淨顯示底圖與背景 */
+    resetOutfit(); 
 };
 </script>
 </body>
