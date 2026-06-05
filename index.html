@@ -19,7 +19,7 @@
         display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
     
-    /* 💡 舞台畫布：鎖定 420 x 680 比例 */
+    /* 💡 換裝舞台容器：保持 420 x 680 */
     #character { 
         position: relative; 
         width: 420px; 
@@ -29,13 +29,14 @@
         overflow: hidden;
     }
     
-    /* 💡 頂級重疊設定：因為是在相同 420x680 畫布下切圖，我們讓圖層完全滿版、不使用 object-fit 壓縮，即可完美還原 Canva 上的精準位置 */
+    /* 💡 【關鍵修正】把 object-fit: contain 加回來，確保所有圖層等比例完美重疊，拒絕變形！ */
     .layer {
         position: absolute; 
         top: 0; 
         left: 0; 
         width: 100%; 
         height: 100%;
+        object-fit: contain; /* 🔥 讓模特兒和您的 Canva 素材採取完全相同的縮放比例，精準對齊 */
         pointer-events: none; 
         user-select: none;
     }
@@ -129,10 +130,8 @@
 </div>
 
 <script>
-// ====================== 素材與歷史知識 ======================
 const assets = {
     hair: [
-        /* 💡 成功更換老師提供的「回鶻髻」透明新連結與專業中史解說 */
         {name:"回鶻髻", url:"https://i.ibb.co/FLzH2Rt7/image.png", info:"唐代中晚期盛極一時的西域少數民族髮式，由回紇傳入中原。"},
         {name:"墮馬髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair2.png", info:"慵懶優雅的側垂髮髻，盛唐復興，體現自然之美。"},
         {name:"雙丫髻", url:"https://i.ibb.co.com/0jKzY8Z/tang-hair3.png", info:"少女常用髮型，活潑可愛，也被稱為「丫髻」。"},
@@ -160,7 +159,6 @@ const assets = {
     ]
 };
 
-// ====================== 渲染與核心功能 ======================
 function renderItems() {
     function createItem(category, item) {
         const div = document.createElement('div');
@@ -214,7 +212,7 @@ function exportTip() {
 window.onload = () => {
     renderItems();
     resetOutfit(); 
-    // 💡 預設自動加載第一個「回鶻髻」測試位置是否完美
+    // 預設自動加載第一個「回鶻髻」測試位置是否完美
     setTimeout(() => {
         document.getElementById('hair').src = assets.hair[0].url;
     }, 200);
